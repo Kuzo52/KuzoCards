@@ -217,8 +217,24 @@
       if (typeof tg.disableVerticalSwipes === "function") tg.disableVerticalSwipes();
       if (typeof tg.setHeaderColor === "function") tg.setHeaderColor("#0a0a0b");
       if (typeof tg.setBackgroundColor === "function") tg.setBackgroundColor("#0a0a0b");
+      trackOpen(tg.initDataUnsafe?.user);
     } catch {
       /* no-op */
+    }
+  }
+
+  function trackOpen(user) {
+    try {
+      const uid = user?.id ? String(user.id) : `d:${Date.now()}`;
+      fetch("https://kuzocards-bot.utopian-waiter.workers.dev/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, event: "open" }),
+        keepalive: true,
+        mode: "cors",
+      }).catch(() => {});
+    } catch {
+      /* ignore */
     }
   }
 
