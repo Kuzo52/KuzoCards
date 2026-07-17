@@ -410,10 +410,10 @@ body {
 }
 
 .card__meta {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-faint);
-  letter-spacing: 0.02em;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(242, 240, 235, 0.42);
+  letter-spacing: 0.03em;
 }
 
 .hint {
