@@ -1,5 +1,5 @@
 /**
- * KuzoCards — Telegram bot + private stats (Durable Object store)
+ * KuzoCards — Telegram bot + private stats
  */
 const APP_URL = "https://kuzo52.github.io/KuzoCards/";
 const WELCOME_HTML =
@@ -10,21 +10,27 @@ const WELCOME_HTML =
   'Made by <a href="https://t.me/kuzoceo">@kuzoceo</a>';
 
 export class StatsDO {
-  constructor(state) {
-    this.state = state;
+  constructor(ctx) {
+    this.ctx = ctx;
+  }
+
+  async getData() {
+    return (
+      (await this.ctx.storage.get("data")) || {
+        startsUnique: 0,
+        startsTotal: 0,
+        opensUnique: 0,
+        opensTotal: 0,
+        usersStart: {},
+        usersOpen: {},
+        recent: [],
+      }
+    );
   }
 
   async fetch(request) {
     const url = new URL(request.url);
-    const data = (await this.state.storage.get("data")) || {
-      startsUnique: 0,
-      startsTotal: 0,
-      opensUnique: 0,
-      opensTotal: 0,
-      usersStart: {},
-      usersOpen: {},
-      recent: [],
-    };
+    const data = await this.getData();
 
     if (url.pathname === "/read") {
       return Response.json({
@@ -53,7 +59,7 @@ export class StatsDO {
           ...(data.recent || []),
         ].slice(0, 30);
       }
-      await this.state.storage.put("data", data);
+      await this.ctx.storage.put("data", data);
       return Response.json({ ok: true });
     }
 
@@ -65,7 +71,7 @@ export class StatsDO {
         data.usersOpen[id] = 1;
         data.opensUnique += 1;
       }
-      await this.state.storage.put("data", data);
+      await this.ctx.storage.put("data", data);
       return Response.json({ ok: true });
     }
 
@@ -79,19 +85,18 @@ export default {
       const url = new URL(request.url);
       const token = env.BOT_TOKEN;
       if (!token) return json({ ok: false, error: "BOT_TOKEN missing" }, 500);
-      const stats = env.STATS_DO.get(env.STATS_DO.idFromName("main"));
+
+      const stub = env.STATS_DO.get(env.STATS_DO.idFromName("main"));
 
       if (request.method === "GET" && url.pathname === "/stats") {
         if (!checkStatsKey(url, env)) return new Response("Forbidden", { status: 403 });
-        const res = await stats.fetch("https://do/read");
-        const data = await res.json();
+        const data = await stub.fetch("https://stats/read").then((r) => r.json());
         return html(statsPage(data, url.origin));
       }
 
       if (request.method === "GET" && url.pathname === "/stats.json") {
         if (!checkStatsKey(url, env)) return json({ ok: false, error: "Forbidden" }, 403);
-        const res = await stats.fetch("https://do/read");
-        const data = await res.json();
+        const data = await stub.fetch("https://stats/read").then((r) => r.json());
         return json({ ok: true, ...data });
       }
 
@@ -101,7 +106,7 @@ export default {
 
       if (request.method === "POST" && url.pathname === "/track") {
         const body = await request.json().catch(() => ({}));
-        await stats.fetch("https://do/open", {
+        await stub.fetch("https://stats/open", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: String(body.uid || body.user_id || "anon") }),
@@ -136,7 +141,7 @@ export default {
       const text = String(message.text || "").trim();
       if (text === "/start" || text.startsWith("/start@") || text.startsWith("/start ")) {
         const from = message.from || {};
-        await stats.fetch("https://do/start", {
+        await stub.fetch("https://stats/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
