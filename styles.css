@@ -60,37 +60,49 @@ body {
   width: 100%;
 }
 
-.welcome {
+.welcome,
+.modes {
   position: fixed;
   inset: 0;
-  z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.875rem;
-  padding: calc(2rem + var(--safe-top)) 1.75rem calc(2rem + var(--safe-bottom));
+  overflow: hidden;
+  isolation: isolate;
   background:
-    radial-gradient(ellipse 70% 45% at 50% 30%, rgba(200, 184, 154, 0.14), transparent 60%),
-    radial-gradient(ellipse 50% 35% at 80% 90%, rgba(255, 255, 255, 0.04), transparent 55%),
-    rgba(7, 7, 8, 0.96);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+    radial-gradient(ellipse 65% 40% at 50% 32%, rgba(200, 184, 154, 0.08), transparent 62%),
+    rgba(7, 7, 8, 0.98);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   transition:
-    opacity 0.45s var(--ease-out),
-    transform 0.45s var(--ease-out),
-    visibility 0.45s;
+    opacity 0.65s var(--ease-out),
+    transform 0.65s var(--ease-out),
+    visibility 0.65s;
+  will-change: opacity, transform;
 }
 
-.welcome__glow {
+.welcome {
+  z-index: 100;
+  padding: calc(2rem + var(--safe-top)) 1.75rem calc(2rem + var(--safe-bottom));
+}
+
+.welcome[hidden] {
+  display: none !important;
+}
+
+.welcome__glow,
+.modes__glow {
   position: absolute;
-  width: 14rem;
-  height: 14rem;
+  width: 11rem;
+  height: 11rem;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(200, 184, 154, 0.22), transparent 70%);
-  filter: blur(8px);
+  background: radial-gradient(circle, rgba(200, 184, 154, 0.12), transparent 72%);
+  filter: blur(18px);
   pointer-events: none;
-  animation: welcomePulse 3.2s var(--ease-fluid) infinite;
+  opacity: 0.55;
+  animation: welcomePulse 4.5s var(--ease-fluid) infinite;
 }
 
 .welcome__brand {
@@ -100,7 +112,7 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--champagne);
-  animation: welcomeIn 0.7s var(--ease-out) both;
+  animation: welcomeIn 0.9s var(--ease-out) both;
 }
 
 .welcome__title {
@@ -112,7 +124,7 @@ body {
   line-height: 1.1;
   text-align: center;
   color: var(--text);
-  animation: welcomeIn 0.7s 0.08s var(--ease-out) both;
+  animation: welcomeIn 0.9s 0.1s var(--ease-out) both;
 }
 
 .welcome__text {
@@ -124,7 +136,7 @@ body {
   letter-spacing: -0.01em;
   text-align: center;
   color: var(--text-muted);
-  animation: welcomeIn 0.7s 0.14s var(--ease-out) both;
+  animation: welcomeIn 0.9s 0.18s var(--ease-out) both;
 }
 
 .welcome__btn {
@@ -144,10 +156,10 @@ body {
   cursor: pointer;
   box-shadow: 0 12px 32px rgba(200, 184, 154, 0.22);
   transition:
-    transform 0.2s var(--ease-snappy),
-    box-shadow 0.25s var(--ease-fluid),
-    filter 0.25s var(--ease-fluid);
-  animation: welcomeIn 0.7s 0.22s var(--ease-out) both;
+    transform 0.25s var(--ease-snappy),
+    box-shadow 0.3s var(--ease-fluid),
+    filter 0.3s var(--ease-fluid);
+  animation: welcomeIn 0.9s 0.26s var(--ease-out) both;
 }
 
 .welcome__btn:hover {
@@ -162,14 +174,21 @@ body {
 .welcome--out {
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-0.75rem) scale(0.985);
+  transform: translateY(-0.5rem) scale(0.99);
   pointer-events: none;
+}
+
+.welcome--out .welcome__glow,
+.welcome--out .modes__glow {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-fluid);
 }
 
 @keyframes welcomeIn {
   from {
     opacity: 0;
-    transform: translateY(0.85rem);
+    transform: translateY(1rem);
   }
   to {
     opacity: 1;
@@ -180,12 +199,12 @@ body {
 @keyframes welcomePulse {
   0%,
   100% {
-    opacity: 0.7;
+    opacity: 0.4;
     transform: scale(1);
   }
   50% {
-    opacity: 1;
-    transform: scale(1.08);
+    opacity: 0.65;
+    transform: scale(1.04);
   }
 }
 
@@ -262,35 +281,31 @@ body {
 }
 
 .modes {
-  position: fixed;
-  inset: 0;
   z-index: 90;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
   padding: calc(1.5rem + var(--safe-top)) 1.25rem calc(1.5rem + var(--safe-bottom));
-  background:
-    radial-gradient(ellipse 70% 45% at 50% 28%, rgba(200, 184, 154, 0.12), transparent 60%),
-    rgba(7, 7, 8, 0.97);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  gap: 0.75rem;
   opacity: 0;
-  transform: translateY(0.5rem);
-  transition:
-    opacity 0.45s var(--ease-out),
-    transform 0.45s var(--ease-out),
-    visibility 0.45s;
+  visibility: hidden;
+  transform: translateY(0.65rem);
+  pointer-events: none;
 }
 
 .modes[hidden] {
-  display: none;
+  display: none !important;
 }
 
 .modes--in {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
+  pointer-events: auto;
+}
+
+.modes.welcome--out {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.4rem);
+  pointer-events: none;
 }
 
 .welcome__title--sm {
@@ -323,21 +338,28 @@ body {
   border: 1px solid var(--border);
   border-radius: 20px;
   cursor: pointer;
+  opacity: 0;
+  transform: translateY(0.75rem);
   transition:
-    transform 0.2s var(--ease-snappy),
-    background 0.25s var(--ease-fluid),
-    border-color 0.25s var(--ease-fluid);
-  animation: welcomeIn 0.65s var(--ease-out) both;
+    transform 0.25s var(--ease-snappy),
+    background 0.3s var(--ease-fluid),
+    border-color 0.3s var(--ease-fluid),
+    opacity 0.55s var(--ease-out);
 }
 
-.mode-card:nth-child(1) {
-  animation-delay: 0.06s;
+.modes--in .mode-card {
+  opacity: 1;
+  transform: translateY(0);
 }
-.mode-card:nth-child(2) {
-  animation-delay: 0.12s;
+
+.modes--in .mode-card:nth-child(1) {
+  transition-delay: 0.08s;
 }
-.mode-card:nth-child(3) {
-  animation-delay: 0.18s;
+.modes--in .mode-card:nth-child(2) {
+  transition-delay: 0.16s;
+}
+.modes--in .mode-card:nth-child(3) {
+  transition-delay: 0.24s;
 }
 
 .mode-card:hover {
@@ -453,6 +475,21 @@ body {
   margin-top: 0.25rem;
   overflow: hidden;
   isolation: isolate;
+}
+
+.deck--enter {
+  animation: deckEnter 0.7s var(--ease-out) both;
+}
+
+@keyframes deckEnter {
+  from {
+    opacity: 0;
+    transform: translateY(0.85rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .deck__empty {

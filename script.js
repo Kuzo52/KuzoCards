@@ -226,10 +226,13 @@
     welcomeBtn.addEventListener("click", () => {
       haptic("light");
       welcomeEl.classList.add("welcome--out");
+      // Soft crossfade: modes rise while welcome fades
+      window.setTimeout(() => {
+        showModes();
+      }, 180);
       window.setTimeout(() => {
         welcomeEl.hidden = true;
-        showModes();
-      }, 420);
+      }, 680);
     });
   }
 
@@ -239,7 +242,9 @@
     modesEl.hidden = false;
     modesEl.classList.remove("welcome--out", "modes--in");
     void modesEl.offsetWidth;
-    modesEl.classList.add("modes--in");
+    requestAnimationFrame(() => {
+      modesEl.classList.add("modes--in");
+    });
   }
 
   function bindModeSwitch() {
@@ -286,12 +291,16 @@
     btnMode.hidden = false;
     modeBadge.textContent = `${currentMode.title} · ${currentMode.label}`;
 
+    modesEl.classList.remove("modes--in");
     modesEl.classList.add("welcome--out");
     window.setTimeout(() => {
       modesEl.hidden = true;
-      modesEl.classList.remove("modes--in");
+      modesEl.classList.remove("welcome--out", "modes--in");
       render();
-    }, 420);
+      // Soft enter for deck
+      deckEl.classList.add("deck--enter");
+      window.setTimeout(() => deckEl.classList.remove("deck--enter"), 700);
+    }, 620);
   }
 
   function lockViewport() {
