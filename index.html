@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0b">
+  <title>KuzoCards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__actions">
+      <p class="counter" id="counter" aria-live="polite">20</p>
+      <button type="button" class="btn-reset" id="btnReset" aria-label="Сбросить прогресс">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <h1 class="brand">KuzoCards</h1>
+    <section class="deck" id="deck" aria-label="Стопка карточек">
+      <p class="deck__empty" id="deckEmpty" hidden>Колода пуста.&nbsp;Сбрось прогресс и&nbsp;начинай снова.</p>
+    </section>
+    <p class="hint">
+      <span>свайп вправо — выполнено</span>
+      <span>влево — пропуск</span>
+    </p>
+  </main>
+
+  <footer class="footer">
+    <p>Made by <a href="https://t.me/kuzoceo" target="_blank" rel="noopener noreferrer">@kuzoceo</a></p>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
