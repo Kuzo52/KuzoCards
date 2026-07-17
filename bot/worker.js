@@ -1,5 +1,5 @@
 /**
- * KuzoCards — Telegram bot + private stats
+ * KuzoCards — Telegram bot + private per-user stats
  */
 const APP_URL = "https://kuzo52.github.io/KuzoCards/";
 const WELCOME_HTML =
@@ -15,17 +15,18 @@ export class StatsDO {
   }
 
   async getData() {
-    return (
+    const raw =
       (await this.ctx.storage.get("data")) || {
         startsUnique: 0,
         startsTotal: 0,
         opensUnique: 0,
         opensTotal: 0,
+        users: {},
         usersStart: {},
         usersOpen: {},
         recent: [],
-      }
-    );
+      };
+    return migrate(raw);
   }
 
   async fetch(request) {
@@ -33,11 +34,15 @@ export class StatsDO {
     const data = await this.getData();
 
     if (url.pathname === "/read") {
+      const users = Object.values(data.users || {})
+        .sort((a, b) => (b.lastAt || "").localeCompare(a.lastAt || ""))
+        .slice(0, 200);
       return Response.json({
         startsUnique: data.startsUnique,
         startsTotal: data.startsTotal,
         opensUnique: data.opensUnique,
         opensTotal: data.opensTotal,
+        users,
         recent: data.recent || [],
       });
     }
@@ -45,20 +50,34 @@ export class StatsDO {
     if (url.pathname === "/start" && request.method === "POST") {
       const body = await request.json();
       const id = String(body.id || "");
+      if (!id) return Response.json({ ok: false }, 400);
+
+      const now = new Date().toISOString();
+      const user = data.users[id] || {
+        id,
+        name: "Без имени",
+        username: "—",
+        starts: 0,
+        opens: 0,
+        firstAt: now,
+        lastAt: now,
+      };
+
+      const wasNew = user.starts === 0;
+      user.starts += 1;
+      user.name = body.name || user.name;
+      user.username = body.username || user.username;
+      user.lastAt = now;
+      data.users[id] = user;
       data.startsTotal += 1;
-      if (id && !data.usersStart[id]) {
-        data.usersStart[id] = 1;
+      if (wasNew) {
         data.startsUnique += 1;
         data.recent = [
-          {
-            id,
-            name: body.name || "Без имени",
-            username: body.username || "—",
-            at: new Date().toISOString(),
-          },
+          { id, name: user.name, username: user.username, at: now },
           ...(data.recent || []),
         ].slice(0, 30);
       }
+
       await this.ctx.storage.put("data", data);
       return Response.json({ ok: true });
     }
@@ -66,17 +85,68 @@ export class StatsDO {
     if (url.pathname === "/open" && request.method === "POST") {
       const body = await request.json();
       const id = String(body.id || "anon");
+      const now = new Date().toISOString();
+      const user = data.users[id] || {
+        id,
+        name: body.name || (id === "anon" ? "Аноним" : "Без имени"),
+        username: body.username || "—",
+        starts: 0,
+        opens: 0,
+        firstAt: now,
+        lastAt: now,
+      };
+
+      const wasNewOpen = user.opens === 0;
+      user.opens += 1;
+      if (body.name) user.name = body.name;
+      if (body.username) user.username = body.username;
+      user.lastAt = now;
+      data.users[id] = user;
       data.opensTotal += 1;
-      if (id && !data.usersOpen[id]) {
-        data.usersOpen[id] = 1;
-        data.opensUnique += 1;
-      }
+      if (wasNewOpen) data.opensUnique += 1;
+
       await this.ctx.storage.put("data", data);
       return Response.json({ ok: true });
     }
 
     return new Response("Not found", { status: 404 });
   }
+}
+
+function migrate(raw) {
+  if (raw.users && typeof raw.users === "object") return raw;
+
+  const users = {};
+  const startMap = raw.usersStart || {};
+  const openMap = raw.usersOpen || {};
+  const recent = raw.recent || [];
+  const meta = {};
+  for (const r of recent) meta[r.id] = r;
+
+  const ids = new Set([...Object.keys(startMap), ...Object.keys(openMap)]);
+  for (const id of ids) {
+    const m = meta[id] || {};
+    const starts = Number(startMap[id] || 0) > 0 ? Number(startMap[id]) || 1 : 0;
+    const opens = Number(openMap[id] || 0) > 0 ? Number(openMap[id]) || 1 : 0;
+    users[id] = {
+      id,
+      name: m.name || "Без имени",
+      username: m.username || "—",
+      starts: starts || (startMap[id] ? 1 : 0),
+      opens: opens || (openMap[id] ? 1 : 0),
+      firstAt: m.at || new Date().toISOString(),
+      lastAt: m.at || new Date().toISOString(),
+    };
+  }
+
+  return {
+    startsUnique: Number(raw.startsUnique || Object.keys(startMap).length || 0),
+    startsTotal: Number(raw.startsTotal || 0),
+    opensUnique: Number(raw.opensUnique || Object.keys(openMap).length || 0),
+    opensTotal: Number(raw.opensTotal || 0),
+    users,
+    recent,
+  };
 }
 
 export default {
@@ -87,6 +157,11 @@ export default {
       if (!token) return json({ ok: false, error: "BOT_TOKEN missing" }, 500);
 
       const stub = env.STATS_DO.get(env.STATS_DO.idFromName("main"));
+
+      if ((request.method === "GET" || request.method === "HEAD") && url.pathname === "/") {
+        if (request.method === "HEAD") return new Response(null, { status: 200 });
+        return json({ ok: true, service: "kuzocards-bot" });
+      }
 
       if (request.method === "GET" && url.pathname === "/stats") {
         if (!checkStatsKey(url, env)) return new Response("Forbidden", { status: 403 });
@@ -109,7 +184,11 @@ export default {
         await stub.fetch("https://stats/open", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: String(body.uid || body.user_id || "anon") }),
+          body: JSON.stringify({
+            id: String(body.uid || body.user_id || "anon"),
+            name: body.name || "",
+            username: body.username || "",
+          }),
         });
         return cors(json({ ok: true }));
       }
@@ -124,10 +203,6 @@ export default {
         });
         const info = await telegram(token, "getWebhookInfo", {});
         return json({ ok: true, webhookUrl, result, info });
-      }
-
-      if (request.method === "GET") {
-        return json({ ok: true, service: "kuzocards-bot" });
       }
 
       if (request.method !== "POST") {
@@ -217,12 +292,14 @@ function escapeHtml(s) {
 }
 
 function statsPage(stats, origin) {
-  const rows = (stats.recent || [])
+  const userRows = (stats.users || [])
     .map(
-      (r) => `<tr>
-      <td>${escapeHtml(r.name)}</td>
-      <td>${escapeHtml(r.username)}</td>
-      <td>${escapeHtml(new Date(r.at).toLocaleString("ru-RU"))}</td>
+      (u) => `<tr>
+      <td>${escapeHtml(u.name)}</td>
+      <td>${escapeHtml(u.username)}</td>
+      <td>${Number(u.starts || 0)}</td>
+      <td>${Number(u.opens || 0)}</td>
+      <td>${escapeHtml(u.lastAt ? new Date(u.lastAt).toLocaleString("ru-RU") : "—")}</td>
     </tr>`
     )
     .join("");
@@ -237,7 +314,7 @@ function statsPage(stats, origin) {
     :root { color-scheme: dark; --bg:#0a0a0b; --text:#f2f0eb; --muted:rgba(242,240,235,.5); --gold:#c8b89a; --card:#161618; --line:rgba(255,255,255,.08); }
     *{box-sizing:border-box;margin:0;padding:0}
     body{min-height:100vh;font-family:system-ui,sans-serif;background:radial-gradient(ellipse 70% 40% at 50% 0,rgba(200,184,154,.1),transparent 55%),var(--bg);color:var(--text);padding:2rem 1.25rem}
-    main{max-width:42rem;margin:0 auto}
+    main{max-width:52rem;margin:0 auto}
     .brand{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:.75rem}
     h1{font-size:1.75rem;letter-spacing:-.03em;margin-bottom:.35rem}
     .sub{color:var(--muted);font-size:.9rem;margin-bottom:1.75rem}
@@ -245,10 +322,13 @@ function statsPage(stats, origin) {
     .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:1.1rem 1.2rem}
     .card span{display:block;font-size:.75rem;color:var(--muted);margin-bottom:.35rem}
     .card strong{font-size:1.75rem;letter-spacing:-.03em;color:var(--gold)}
-    h2{font-size:1rem;margin-bottom:.75rem}
-    table{width:100%;border-collapse:collapse;font-size:.875rem}
-    th,td{text-align:left;padding:.65rem .4rem;border-bottom:1px solid var(--line)}
-    th{color:var(--muted);font-weight:500}
+    h2{font-size:1rem;margin:0 0 .75rem}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
+    table{width:100%;border-collapse:collapse;font-size:.875rem;min-width:34rem}
+    th,td{text-align:left;padding:.7rem .75rem;border-bottom:1px solid var(--line);white-space:nowrap}
+    th{color:var(--muted);font-weight:500;background:rgba(255,255,255,.02)}
+    tr:last-child td{border-bottom:none}
+    .num{color:var(--gold);font-weight:600}
     .foot{margin-top:1.5rem;color:var(--muted);font-size:.75rem}
     @media(max-width:520px){.grid{grid-template-columns:1fr}}
   </style>
@@ -260,15 +340,30 @@ function statsPage(stats, origin) {
     <p class="sub">Приватная страница. Никому не отправляй ссылку с ключом.</p>
     <div class="grid">
       <article class="card"><span>Уникальных /start</span><strong>${stats.startsUnique}</strong></article>
-      <article class="card"><span>Всего /start</span><strong>${stats.startsTotal}</strong></article>
+      <article class="card"><span>Всего запусков бота</span><strong>${stats.startsTotal}</strong></article>
       <article class="card"><span>Уникальных открытий игры</span><strong>${stats.opensUnique}</strong></article>
       <article class="card"><span>Всего открытий игры</span><strong>${stats.opensTotal}</strong></article>
     </div>
-    <h2>Последние новые пользователи</h2>
-    <table>
-      <thead><tr><th>Имя</th><th>Username</th><th>Когда</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="3">Пока пусто — подожди первые /start</td></tr>'}</tbody>
-    </table>
+    <h2>По каждому пользователю</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Username</th>
+            <th>/start</th>
+            <th>Открытий игры</th>
+            <th>Последний визит</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            userRows ||
+            '<tr><td colspan="5">Пока пусто — подожди первые /start</td></tr>'
+          }
+        </tbody>
+      </table>
+    </div>
     <p class="foot">Источник: ${escapeHtml(origin)} · обнови страницу после новых заходов</p>
   </main>
 </body>

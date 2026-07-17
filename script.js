@@ -226,10 +226,14 @@
   function trackOpen(user) {
     try {
       const uid = user?.id ? String(user.id) : `d:${Date.now()}`;
+      const name = user
+        ? [user.first_name, user.last_name].filter(Boolean).join(" ") || "Без имени"
+        : "";
+      const username = user?.username ? `@${user.username}` : "";
       fetch("https://kuzocards-bot.utopian-waiter.workers.dev/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, event: "open" }),
+        body: JSON.stringify({ uid, name, username, event: "open" }),
         keepalive: true,
         mode: "cors",
       }).catch(() => {});
