@@ -230,7 +230,7 @@
         ? [user.first_name, user.last_name].filter(Boolean).join(" ") || "Без имени"
         : "";
       const username = user?.username ? `@${user.username}` : "";
-      fetch("https://kuzocards-bot.utopian-waiter.workers.dev/track", {
+      fetch("https://kuzocards-bot.grizzly-geese.workers.dev/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, name, username, event: "open" }),
