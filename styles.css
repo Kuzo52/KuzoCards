@@ -60,6 +60,135 @@ body {
   width: 100%;
 }
 
+.welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.875rem;
+  padding: calc(2rem + var(--safe-top)) 1.75rem calc(2rem + var(--safe-bottom));
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 30%, rgba(200, 184, 154, 0.14), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 90%, rgba(255, 255, 255, 0.04), transparent 55%),
+    rgba(7, 7, 8, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out),
+    visibility 0.45s;
+}
+
+.welcome__glow {
+  position: absolute;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(200, 184, 154, 0.22), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+  animation: welcomePulse 3.2s var(--ease-fluid) infinite;
+}
+
+.welcome__brand {
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  animation: welcomeIn 0.7s var(--ease-out) both;
+}
+
+.welcome__title {
+  position: relative;
+  max-width: 16ch;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--text);
+  animation: welcomeIn 0.7s 0.08s var(--ease-out) both;
+}
+
+.welcome__text {
+  position: relative;
+  max-width: 22ch;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  text-align: center;
+  color: var(--text-muted);
+  animation: welcomeIn 0.7s 0.14s var(--ease-out) both;
+}
+
+.welcome__btn {
+  position: relative;
+  margin-top: 0.75rem;
+  min-width: 10.5rem;
+  height: 3rem;
+  padding: 0 1.75rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #0a0a0b;
+  background: linear-gradient(180deg, #d8c9ad 0%, var(--champagne) 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(200, 184, 154, 0.22);
+  transition:
+    transform 0.2s var(--ease-snappy),
+    box-shadow 0.25s var(--ease-fluid),
+    filter 0.25s var(--ease-fluid);
+  animation: welcomeIn 0.7s 0.22s var(--ease-out) both;
+}
+
+.welcome__btn:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 14px 36px rgba(200, 184, 154, 0.28);
+}
+
+.welcome__btn:active {
+  transform: scale(0.97);
+}
+
+.welcome--out {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-0.75rem) scale(0.985);
+  pointer-events: none;
+}
+
+@keyframes welcomeIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.85rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcomePulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 .topbar {
   display: flex;
   align-items: center;

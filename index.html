@@ -8,10 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=3">
+  <link rel="stylesheet" href="styles.css?v=4">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+  <div class="welcome" id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <div class="welcome__glow" aria-hidden="true"></div>
+    <p class="welcome__brand">KuzoCards</p>
+    <h2 class="welcome__title" id="welcomeTitle">Добро пожаловать!</h2>
+    <p class="welcome__text">Карточная игра для компании.&nbsp;Свайпай и&nbsp;играй.</p>
+    <button type="button" class="welcome__btn" id="welcomeBtn">Начать</button>
+  </div>
+
   <header class="topbar">
     <div class="topbar__actions">
       <p class="counter" id="counter" aria-live="polite">20</p>
@@ -38,6 +46,6 @@
     <p>Made by <a href="https://t.me/kuzoceo" target="_blank" rel="noopener noreferrer">@kuzoceo</a></p>
   </footer>
 
-  <script src="script.js?v=3" defer></script>
+  <script src="script.js?v=4" defer></script>
 </body>
 </html>

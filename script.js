@@ -35,6 +35,8 @@
   const emptyEl = document.getElementById("deckEmpty");
   const counterEl = document.getElementById("counter");
   const resetBtn = document.getElementById("btnReset");
+  const welcomeEl = document.getElementById("welcome");
+  const welcomeBtn = document.getElementById("welcomeBtn");
 
   let remaining = loadProgress();
   let isAnimating = false;
@@ -42,6 +44,7 @@
 
   initTelegram();
   lockViewport();
+  bindWelcome();
   render();
   bindReset();
 
@@ -56,6 +59,17 @@
     } catch {
       /* SDK недоступен вне Telegram */
     }
+  }
+
+  function bindWelcome() {
+    if (!welcomeEl || !welcomeBtn) return;
+    welcomeBtn.addEventListener("click", () => {
+      haptic("light");
+      welcomeEl.classList.add("welcome--out");
+      window.setTimeout(() => {
+        welcomeEl.hidden = true;
+      }, 450);
+    });
   }
 
   function lockViewport() {
