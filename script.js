@@ -378,7 +378,6 @@
       <span class="card__stamp card__stamp--skip" aria-hidden="true">Skip</span>
       <p class="card__label">Вопрос</p>
       <p class="card__text">${html}</p>
-      <p class="card__meta">KuzoCards</p>
     `;
 
     if (isActive) bindDrag(card);

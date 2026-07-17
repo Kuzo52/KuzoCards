@@ -591,20 +591,13 @@ body {
   flex: 1;
   display: grid;
   place-items: center;
-  padding: 1.35rem 0;
-  font-size: clamp(1.3125rem, 5.2vw, 1.625rem);
+  padding: 1.5rem 0.15rem 0.5rem;
+  font-size: clamp(1.4375rem, 5.8vw, 1.8125rem);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.32;
   letter-spacing: -0.025em;
   text-align: center;
   text-wrap: balance;
-}
-
-.card__meta {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: rgba(242, 240, 235, 0.42);
-  letter-spacing: 0.03em;
 }
 
 .hint {
