@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -45,7 +45,10 @@
   </div>
 
   <header class="topbar">
-    <p class="mode-badge" id="modeBadge" hidden></p>
+    <button type="button" class="btn-mode" id="btnMode" hidden aria-label="Сменить режим">
+      <span class="btn-mode__label" id="modeBadge"></span>
+      <span class="btn-mode__action">сменить</span>
+    </button>
     <div class="topbar__actions">
       <p class="counter" id="counter" aria-live="polite">0</p>
       <button type="button" class="btn-reset" id="btnReset" aria-label="Сбросить прогресс">
@@ -71,6 +74,6 @@
     <p>Made by <a href="https://t.me/kuzoceo" target="_blank" rel="noopener noreferrer">@kuzoceo</a></p>
   </footer>
 
-  <script src="script.js?v=7" defer></script>
+  <script src="script.js?v=8" defer></script>
 </body>
 </html>

@@ -193,6 +193,7 @@
   const welcomeBtn = document.getElementById("welcomeBtn");
   const modesEl = document.getElementById("modes");
   const modeBadge = document.getElementById("modeBadge");
+  const btnMode = document.getElementById("btnMode");
 
   let currentMode = null;
   let questions = [];
@@ -205,6 +206,7 @@
   lockViewport();
   bindWelcome();
   bindModes();
+  bindModeSwitch();
   bindReset();
 
   function initTelegram() {
@@ -232,10 +234,30 @@
   }
 
   function showModes() {
+    isAnimating = false;
+    drag = null;
     modesEl.hidden = false;
-    modesEl.classList.remove("welcome--out");
+    modesEl.classList.remove("welcome--out", "modes--in");
     void modesEl.offsetWidth;
     modesEl.classList.add("modes--in");
+  }
+
+  function bindModeSwitch() {
+    if (!btnMode) return;
+    btnMode.addEventListener("click", () => {
+      if (!gameReady) return;
+      haptic("light");
+      openModePicker();
+    });
+  }
+
+  function openModePicker() {
+    gameReady = false;
+    btnMode.hidden = true;
+    deckEl.querySelectorAll(".card").forEach((el) => el.remove());
+    emptyEl.hidden = true;
+    counterEl.textContent = "0";
+    showModes();
   }
 
   function bindModes() {
@@ -261,12 +283,13 @@
       /* ignore */
     }
 
-    modeBadge.hidden = false;
+    btnMode.hidden = false;
     modeBadge.textContent = `${currentMode.title} · ${currentMode.label}`;
 
     modesEl.classList.add("welcome--out");
     window.setTimeout(() => {
       modesEl.hidden = true;
+      modesEl.classList.remove("modes--in");
       render();
     }, 420);
   }
@@ -552,6 +575,7 @@
         welcomeEl.hidden = false;
         welcomeEl.classList.remove("welcome--out");
         modesEl.hidden = true;
+        btnMode.hidden = true;
         return;
       }
       remaining = questions.map((_, i) => i);

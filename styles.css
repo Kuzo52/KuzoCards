@@ -207,6 +207,60 @@ body {
   white-space: nowrap;
 }
 
+.btn-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(58vw, 14rem);
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  font-family: inherit;
+  color: var(--champagne);
+  background: var(--champagne-soft);
+  border: 1px solid rgba(200, 184, 154, 0.22);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    background 0.25s var(--ease-fluid),
+    border-color 0.25s var(--ease-fluid),
+    transform 0.2s var(--ease-snappy);
+}
+
+.btn-mode[hidden] {
+  display: none;
+}
+
+.btn-mode:hover {
+  background: rgba(200, 184, 154, 0.26);
+  border-color: rgba(200, 184, 154, 0.35);
+}
+
+.btn-mode:active {
+  transform: scale(0.97);
+}
+
+.btn-mode__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-mode__action {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(242, 240, 235, 0.55);
+  text-transform: lowercase;
+  padding-left: 0.5rem;
+  border-left: 1px solid rgba(200, 184, 154, 0.28);
+}
+
 .modes {
   position: fixed;
   inset: 0;
