@@ -2,9 +2,10 @@
   "use strict";
 
   const STORAGE_KEY = "kuzocards:progress";
-  const SWIPE_THRESHOLD = 120;
-  const ROTATION_FACTOR = 0.08;
-  const EXIT_MULTIPLIER = 1.35;
+  const SWIPE_THRESHOLD = 110;
+  const ROTATION_FACTOR = 0.07;
+  const EXIT_MULTIPLIER = 1.5;
+  const Y_DAMP = 0.12;
 
   const QUESTIONS = [
     "Назови три факта о&nbsp;соседе слева — два правда, один ложь. Компания угадывает.",
@@ -40,6 +41,7 @@
   let drag = null;
 
   initTelegram();
+  lockViewport();
   render();
   bindReset();
 
@@ -48,11 +50,22 @@
       if (!tg) return;
       tg.ready();
       tg.expand();
+      if (typeof tg.disableVerticalSwipes === "function") tg.disableVerticalSwipes();
       if (typeof tg.setHeaderColor === "function") tg.setHeaderColor("#0a0a0b");
       if (typeof tg.setBackgroundColor === "function") tg.setBackgroundColor("#0a0a0b");
     } catch {
-      /* SDK недоступен вне Telegram — игра работает локально */
+      /* SDK недоступен вне Telegram */
     }
+  }
+
+  function lockViewport() {
+    const block = (e) => {
+      if (drag || isAnimating) e.preventDefault();
+    };
+    document.addEventListener("touchmove", block, { passive: false });
+    window.addEventListener("scroll", () => {
+      window.scrollTo(0, 0);
+    });
   }
 
   function haptic(type = "light") {
@@ -84,6 +97,7 @@
   }
 
   function render() {
+    drag = null;
     const oldCards = deckEl.querySelectorAll(".card");
     oldCards.forEach((el) => el.remove());
 
@@ -134,9 +148,14 @@
     const onPointerDown = (e) => {
       if (isAnimating || e.button === 2) return;
       e.preventDefault();
-      card.setPointerCapture?.(e.pointerId);
+      try {
+        card.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
       drag = {
         card,
+        pointerId: e.pointerId,
         startX: e.clientX,
         startY: e.clientY,
         x: 0,
@@ -147,15 +166,23 @@
 
     const onPointerMove = (e) => {
       if (!drag || drag.card !== card) return;
+      e.preventDefault();
       drag.x = e.clientX - drag.startX;
-      drag.y = e.clientY - drag.startY;
+      drag.y = (e.clientY - drag.startY) * Y_DAMP;
       const rot = drag.x * ROTATION_FACTOR;
-      card.style.transform = `translate(${drag.x}px, ${drag.y}px) rotate(${rot}deg)`;
+      card.style.transform = `translate3d(${drag.x}px, ${drag.y}px, 0) rotate(${rot}deg)`;
       updateStamps(card, drag.x);
     };
 
-    const onPointerUp = () => {
+    const endDrag = (e) => {
       if (!drag || drag.card !== card) return;
+      if (e && drag.pointerId != null) {
+        try {
+          card.releasePointerCapture(drag.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
       const { x, y } = drag;
       drag = null;
       card.classList.remove("card--dragging");
@@ -169,18 +196,19 @@
 
     card.addEventListener("pointerdown", onPointerDown);
     card.addEventListener("pointermove", onPointerMove);
-    card.addEventListener("pointerup", onPointerUp);
-    card.addEventListener("pointercancel", onPointerUp);
+    card.addEventListener("pointerup", endDrag);
+    card.addEventListener("pointercancel", endDrag);
   }
 
   function updateStamps(card, x) {
     const done = card.querySelector(".card__stamp--done");
     const skip = card.querySelector(".card__stamp--skip");
+    if (!done || !skip) return;
     const progress = Math.min(Math.abs(x) / SWIPE_THRESHOLD, 1);
-    if (x > 0) {
+    if (x > 24) {
       done.style.opacity = String(progress);
       skip.style.opacity = "0";
-    } else if (x < 0) {
+    } else if (x < -24) {
       skip.style.opacity = String(progress);
       done.style.opacity = "0";
     } else {
@@ -189,38 +217,63 @@
     }
   }
 
+  function clearStamps(card) {
+    const done = card.querySelector(".card__stamp--done");
+    const skip = card.querySelector(".card__stamp--skip");
+    if (done) done.style.opacity = "0";
+    if (skip) skip.style.opacity = "0";
+  }
+
   function snapBack(card) {
-    card.style.transition = `transform 0.35s var(--ease-out)`;
-    card.style.transform = "";
-    updateStamps(card, 0);
+    clearStamps(card);
+    card.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+    card.style.transform = "translate3d(0, 0, 0) rotate(0deg)";
     const clear = () => {
       card.style.transition = "";
+      card.style.transform = "";
       card.removeEventListener("transitionend", clear);
     };
     card.addEventListener("transitionend", clear);
   }
 
   function completeSwipe(card, action, x, y) {
+    if (isAnimating) return;
     isAnimating = true;
     haptic("light");
+    clearStamps(card);
 
     const dir = action === "done" ? 1 : -1;
-    const exitX = dir * Math.max(window.innerWidth, 420) * EXIT_MULTIPLIER;
-    const exitY = y * 1.2;
-    const rot = dir * 28;
-
-    card.classList.add("card--fly");
-    card.style.transform = `translate(${exitX}px, ${exitY}px) rotate(${rot}deg)`;
-    card.style.opacity = "0";
+    const exitX = dir * (window.innerWidth + card.offsetWidth) * EXIT_MULTIPLIER;
+    const exitY = y * 0.35;
+    const rot = dir * 26;
 
     const qIndex = Number(card.dataset.index);
     remaining = remaining.filter((i) => i !== qIndex);
     saveProgress();
 
-    window.setTimeout(() => {
+    card.classList.add("card--fly");
+    card.style.pointerEvents = "none";
+    // force layout so transition always starts
+    void card.offsetWidth;
+    card.style.transform = `translate3d(${exitX}px, ${exitY}px, 0) rotate(${rot}deg)`;
+    card.style.opacity = "0";
+
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      card.remove();
       isAnimating = false;
       render();
-    }, 420);
+      try {
+        tg?.expand?.();
+      } catch {
+        /* ignore */
+      }
+    };
+
+    card.addEventListener("transitionend", finish, { once: true });
+    window.setTimeout(finish, 380);
   }
 
   function bindReset() {
