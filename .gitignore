@@ -2,3 +2,8 @@
 *.log
 .idea/
 .vscode/
+bot-token.txt
+.env
+bot/.dev.vars
+bot/secrets.env
+bot/wrangler.toml.bak
